@@ -1,52 +1,98 @@
 import { bind, wire } from 'hyperhtml/cjs'
 import * as most from '@most/core'
-import * as mostDOM from '@most/dom-event'
 import { newDefaultScheduler } from '@most/scheduler'
 import Table from './Table'
 import FakeHeaders from './FakeHeaders'
+import Style from './Style'
 import data from './data.json'
+import makeDraggable, { GRAB, DROP } from './drag'
+import getDimensions from './dimensions'
 
-const DROP = 0
-const GRAB = 1
-const DRAG = 2
+const handleScrolling = dimensions => {
+  const draggingClass = 'a11y-table__scroll-handle--dragging'
 
-const preventDefault = e => e.preventDefault()
-
-const eventToDragInfo = (action, target, e, dragOffset) => ({
-  action: action,
-  target: target,
-  x: e.clientX,
-  y: e.clientY,
-  offset: dragOffset
-})
-
-const beginDrag = (area, draggable, dimensions) => e => {
-  const xRatio = dimensions.table.width / dimensions.scrollBar.horizontal.width
-  const dragOffset = {
-    dx: e.clientX - draggable.offsetLeft * xRatio,
-    dy: e.clientY - draggable.offsetTop
+  const ratio = {
+    x: dimensions.table.width / dimensions.scrollBar.horizontal.width,
+    y: dimensions.table.height / dimensions.scrollBar.vertical.height
   }
 
-  const mousemoves = mostDOM.mousemove(area)
-  const mouseleaves = mostDOM.mouseleave(area)
-  const dragInfos = most.map(
-    e => eventToDragInfo(DRAG, draggable, e, dragOffset),
-    most.until(mouseleaves, mousemoves)
+  const handleDrag = scroller => ({ dragInfo, distance }) => {
+    const el = dragInfo.target
+
+    if (dragInfo.action === GRAB) {
+      el.classList.add(draggingClass)
+      return
+    }
+
+    if (dragInfo.action === DROP) {
+      el.classList.remove(draggingClass)
+      return
+    }
+
+    scroller(distance)
+  }
+
+  const horizontalContainer = document.querySelector('.a11y-table__container')
+  const verticalContainer = document.querySelector('.a11y-table__table')
+  const horizontalScrollbarHandle = document.querySelector(
+    '.a11y-table__scrollbar--horizontal .a11y-table__scroll-handle'
+  )
+  const verticalScrollbarHandle = document.querySelector(
+    '.a11y-table__scrollbar--vertical .a11y-table__scroll-handle'
   )
 
-  return most.startWith(eventToDragInfo(GRAB, draggable, e), dragInfos)
-}
+  const horizontalDragScroll = most.tap(
+    handleDrag(distance => {
+      horizontalContainer.scrollLeft = distance * ratio.x
+    }),
+    most.map(dragInfo => {
+      const min = 0
+      const max = dimensions.table.width - dimensions.scrollBar.horizontal.width
 
-const endDrag = draggable => e =>
-  most.at(0, eventToDragInfo(DROP, draggable, e))
+      if (!dragInfo.offset) {
+        return { dragInfo, distance: horizontalContainer.scrollLeft }
+      }
 
-const makeDraggable = (area, draggable, dimensions) => {
-  const mousedowns = most.tap(preventDefault, mostDOM.mousedown(draggable))
-  const mouseups = mostDOM.mouseup(area)
-  const drag = most.map(beginDrag(area, draggable, dimensions), mousedowns)
-  const drop = most.map(endDrag(draggable), mouseups)
+      const distance = dragInfo.x - dragInfo.offset.dx
 
-  return most.switchLatest(most.merge(drag, drop))
+      if (distance < min) {
+        return { dragInfo, distance: min }
+      } else if (distance > max) {
+        return { dragInfo, distance: max }
+      } else {
+        return { dragInfo, distance }
+      }
+    }, makeDraggable(document.body, horizontalScrollbarHandle, ratio))
+  )
+
+  const verticalDragScroll = most.tap(
+    handleDrag(distance => {
+      verticalContainer.scrollTop = distance * ratio.y
+    }),
+    most.map(dragInfo => {
+      const min = 0
+      const max = dimensions.table.height - dimensions.scrollBar.vertical.height
+
+      if (!dragInfo.offset) {
+        return { dragInfo, distance: verticalContainer.scrollTop }
+      }
+
+      const distance = dragInfo.y - dragInfo.offset.dy
+
+      if (distance < min) {
+        return { dragInfo, distance: min }
+      } else if (distance > max) {
+        return { dragInfo, distance: max }
+      } else {
+        return { dragInfo, distance }
+      }
+    }, makeDraggable(document.body, verticalScrollbarHandle, ratio))
+  )
+
+  most.runEffects(
+    most.merge(horizontalDragScroll, verticalDragScroll),
+    newDefaultScheduler()
+  )
 }
 
 class A11yTable {
@@ -70,54 +116,11 @@ class A11yTable {
   render () {
     const render = () =>
       new Promise((resolve, reject) => {
-        const rect = this._targetEl.getBoundingClientRect()
-        const rowDimensions = this.getRowDimensions()
-
-        const dimensions = {
-          height: rect.height,
-          width: rect.width,
-          table: {
-            width: [...this._columns.values()].reduce(
-              (memo, col) => memo + col.size,
-              0
-            ),
-            height: rowDimensions.headerHeight +
-              rowDimensions.rowHeight * this._data.length,
-            header: {
-              height: rowDimensions.headerHeight
-            },
-            row: {
-              height: rowDimensions.rowHeight
-            }
-          },
-          scrollBar: {
-            horizontal: {},
-            vertical: {}
-          },
-          scroller: {
-            size: 20, // TODO detect!
-            horizontal: {},
-            vertical: {}
-          }
-        }
-
-        dimensions.scrollBar.horizontal.width =
-          dimensions.width - dimensions.scroller.size
-        dimensions.scrollBar.horizontal.height = dimensions.scroller.size
-        dimensions.scrollBar.vertical.width = dimensions.scroller.size
-        dimensions.scrollBar.vertical.height =
-          dimensions.height - dimensions.scroller.size
-
-        dimensions.scroller.horizontal.height =
-          dimensions.scrollBar.horizontal.height
-        dimensions.scroller.horizontal.width =
-          dimensions.scrollBar.horizontal.width *
-          (dimensions.scrollBar.horizontal.width / dimensions.table.width)
-
-        dimensions.scroller.vertical.width = dimensions.scrollBar.vertical.width
-        dimensions.scroller.vertical.height =
-          dimensions.scrollBar.vertical.height *
-          (dimensions.scrollBar.vertical.height / dimensions.table.height)
+        const dimensions = getDimensions({
+          target: this._targetEl,
+          columns: this._columns,
+          data: this._data
+        })
 
         const table = Table(
           { columns: this._columns, data: this._data },
@@ -127,83 +130,7 @@ class A11yTable {
         const fakeHeaders = FakeHeaders(this._columns, dimensions)
 
         const fragment = wire()`
-          <style>${{ text: `
-            .a11y-table {
-              display: flex;
-              flex-wrap: wrap;
-            }
-
-            .a11y-table__container {
-              overflow-x: scroll;
-              height: ${dimensions.height - dimensions.scroller.size}px;
-              width: ${dimensions.scrollBar.horizontal.width}px;
-            }
-
-            .a11y-table__container::-webkit-scrollbar {
-              display: none;
-            }
-
-            .a11y-table__column-header {
-              height: ${dimensions.table.header.height}px;
-            }
-
-            .a11y-table__table {
-              overflow-y: scroll;
-              overflow-x: hidden;
-              flex: 0 0 auto;
-              width: ${dimensions.table.width}px;
-              height: ${dimensions.height - dimensions.scroller.size}px;
-              margin-top: -${dimensions.table.header.height}px;
-            }
-
-            .a11y-table__table::-webkit-scrollbar {
-              display: none;
-            }
-
-            .a11y-table__column-header,
-            .a11y-table td {
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              box-sizing: border-box;
-            }
-
-            .a11y-table__scrollbar {
-              background-color: tomato;
-              position: relative;
-            }
-
-            .a11y-table__scrollbar .a11y-table__scroll-handle {
-              background-color: blue;
-              position: relative;
-              cursor: -webkit-grab;
-            }
-
-            .a11y-table__scrollbar .a11y-table__scroll-handle--dragging {
-              cursor: -webkit-grabbing;
-            }
-
-            .a11y-table__scrollbar.a11y-table__scrollbar--horizontal {
-              height: ${dimensions.scrollBar.horizontal.height}px;
-              width: ${dimensions.scrollBar.horizontal.width}px;
-            }
-
-            .a11y-table__scrollbar.a11y-table__scrollbar--horizontal .a11y-table__scroll-handle {
-              height: ${dimensions.scroller.horizontal.height}px;
-              width: ${dimensions.scroller.horizontal.width}px;
-            }
-
-            .a11y-table__scrollbar.a11y-table__scrollbar--vertical {
-              height: ${dimensions.scrollBar.vertical.height}px;
-              width: ${dimensions.scrollBar.vertical.width}px;
-            }
-
-            .a11y-table__scrollbar.a11y-table__scrollbar--vertical .a11y-table__scroll-handle {
-              height: ${dimensions.scroller.vertical.height}px;
-              width: ${dimensions.scroller.vertical.width}px;
-            }
-            ` }}
-          </style>
+          ${Style(dimensions)}
           <div class='a11y-table__container' onscroll=${this.onHorizontalScroll.bind(this)(dimensions)}>
             ${fakeHeaders}
             <div class='a11y-table__table' onscroll=${this.onVerticalScroll.bind(this)(dimensions)}>
@@ -223,7 +150,7 @@ class A11yTable {
             mutations
               .filter(m => m.target === this._targetEl)
               .forEach(mutation => {
-                this.handleScrolling(dimensions)
+                handleScrolling(dimensions)
               })
           })
 
@@ -239,76 +166,10 @@ class A11yTable {
       })
 
     bind(this._targetEl)`
-    <style>
-      .a11y-table {
-        overflow-x: hidden;
-        width: inherit;
-        height: inherit;
-      }
-    </style>
     <div class='a11y-table'>
       ${{ any: render(), placeholder: 'Loading...' }}
     </div>
     `
-  }
-
-  handleScrolling (dimensions) {
-    const draggingClass = 'a11y-table__scroll-handle--dragging'
-
-    const handleDrag = scroller => ({ dragInfo, distance }) => {
-      const el = dragInfo.target
-
-      if (dragInfo.action === GRAB) {
-        el.classList.add(draggingClass)
-        return
-      }
-
-      if (dragInfo.action === DROP) {
-        el.classList.remove(draggingClass)
-        return
-      }
-
-      scroller(distance)
-    }
-
-    const horizontalContainer = document.querySelector('.a11y-table__container')
-    const horizontalScrollbarHandle = document.querySelector(
-      '.a11y-table__scrollbar--horizontal .a11y-table__scroll-handle'
-    )
-
-    most.runEffects(
-      most.tap(
-        handleDrag(distance => {
-          horizontalContainer.scrollLeft = distance
-        }),
-        most.map(dragInfo => {
-          const min = 0
-          const max =
-            dimensions.table.width - dimensions.scrollBar.horizontal.width
-
-          if (!dragInfo.offset) {
-            return { dragInfo, distance: horizontalContainer.scrollLeft }
-          }
-
-          const distance = dragInfo.x - dragInfo.offset.dx
-
-          if (distance < min) {
-            return { dragInfo, distance: min }
-          } else if (distance > max) {
-            return { dragInfo, distance: max }
-          } else {
-            return { dragInfo, distance }
-          }
-        }, makeDraggable(document.body, horizontalScrollbarHandle, dimensions))
-      ),
-      newDefaultScheduler()
-    )
-  }
-
-  onHorizontalDrag (dimensions) {
-    return event => {
-      console.log(event)
-    }
   }
 
   onHorizontalScroll (dimensions) {
@@ -375,45 +236,6 @@ class A11yTable {
 
       scrollerY.style.top = `${topOffset}px`
     }
-  }
-
-  getRowDimensions () {
-    const el = document.createElement('div')
-    const dimensions = {}
-
-    el.style.width = '1px'
-    el.style.height = '1px'
-    el.style.overflow = 'hidden'
-    el.style.position = 'absolute'
-    el.style.left = '-10000px'
-    el.style.visibility = 'hidden'
-
-    document.body.appendChild(el)
-
-    bind(el)`
-    <table class='a11y-table'>
-      <thead>
-        <tr id='a11y-table__test-header-row'>
-          <th class='a11y-table__column-header'>testing</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr id='a11y-table__test-body-row'>
-          <td class=''>testing</td>
-        </tr>
-      </tbody>
-    </table>
-    `
-
-    const testHeaderRow = document.getElementById('a11y-table__test-header-row')
-    const testBodyRow = document.getElementById('a11y-table__test-body-row')
-
-    dimensions.headerHeight = testHeaderRow.getBoundingClientRect().height
-    dimensions.rowHeight = testBodyRow.getBoundingClientRect().height
-
-    document.body.removeChild(el)
-
-    return dimensions
   }
 
   set data (newData) {

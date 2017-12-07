@@ -35,9 +35,3 @@ export default (columns, dimensions) => {
   </ul>
   `
 }
-
-{
-  /* <span style=${{ height: `${dimensions.headerHeight}px` }}>
-I am a very long set of fake headers that should scroll horizontal with the content below
-</span> */
-}

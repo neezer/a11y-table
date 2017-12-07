@@ -1,7 +1,52 @@
 import { bind, wire } from 'hyperhtml/cjs'
+import * as most from '@most/core'
+import * as mostDOM from '@most/dom-event'
+import { newDefaultScheduler } from '@most/scheduler'
 import Table from './Table'
 import FakeHeaders from './FakeHeaders'
 import data from './data.json'
+
+const DROP = 0
+const GRAB = 1
+const DRAG = 2
+
+const preventDefault = e => e.preventDefault()
+
+const eventToDragInfo = (action, target, e, dragOffset) => ({
+  action: action,
+  target: target,
+  x: e.clientX,
+  y: e.clientY,
+  offset: dragOffset
+})
+
+const beginDrag = (area, draggable) => e => {
+  const dragOffset = {
+    dx: e.clientX - draggable.offsetLeft,
+    dy: e.clientY - draggable.offsetTop
+  }
+
+  const mousemoves = mostDOM.mousemove(area)
+  const mouseleaves = mostDOM.mouseleave(area)
+  const dragInfos = most.map(
+    e => eventToDragInfo(DRAG, draggable, e, dragOffset),
+    most.until(mouseleaves, mousemoves)
+  )
+
+  return most.startWith(eventToDragInfo(GRAB, draggable, e), dragInfos)
+}
+
+const endDrag = draggable => e =>
+  most.at(0, eventToDragInfo(DROP, draggable, e))
+
+const makeDraggable = (area, draggable) => {
+  const mousedowns = most.tap(preventDefault, mostDOM.mousedown(draggable))
+  const mouseups = mostDOM.mouseup(area)
+  const drag = most.map(beginDrag(area, draggable), mousedowns)
+  const drop = most.map(endDrag(draggable), mouseups)
+
+  return most.switchLatest(most.merge(drag, drop))
+}
 
 class A11yTable {
   constructor ({ targetEl, columns, data }, { shouldRender = true } = {}) {
@@ -36,7 +81,7 @@ class A11yTable {
               0
             ),
             height: rowDimensions.headerHeight +
-              rowDimensions.rowHeight * data.length,
+              rowDimensions.rowHeight * this._data.length,
             header: {
               height: rowDimensions.headerHeight
             },
@@ -130,6 +175,11 @@ class A11yTable {
             .a11y-table__scrollbar .a11y-table__scroll-handle {
               background-color: blue;
               position: relative;
+              cursor: -webkit-grab;
+            }
+
+            .a11y-table__scrollbar .a11y-table__scroll-handle--dragging {
+              cursor: -webkit-grabbing;
             }
 
             .a11y-table__scrollbar.a11y-table__scrollbar--horizontal {
@@ -167,6 +217,23 @@ class A11yTable {
           </div>
         `
 
+        if (!this._mutationObserver) {
+          this._mutationObserver = new window.MutationObserver(mutations => {
+            mutations
+              .filter(m => m.target === this._targetEl)
+              .forEach(mutation => {
+                this.handleScrolling(dimensions)
+              })
+          })
+
+          this._mutationObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+          })
+        } else {
+          this._mutationObserver.disconnect()
+        }
+
         resolve(fragment)
       })
 
@@ -182,6 +249,69 @@ class A11yTable {
       ${{ any: render(), placeholder: 'Loading...' }}
     </div>
     `
+  }
+
+  handleScrolling (dimensions) {
+    const draggingClass = 'a11y-table__scroll-handle--dragging'
+
+    const handleDrag = scroller => dragInfo => {
+      const el = dragInfo.target
+
+      if (dragInfo.action === GRAB) {
+        el.classList.add(draggingClass)
+        return
+      }
+
+      if (dragInfo.action === DROP) {
+        el.classList.remove(draggingClass)
+        return
+      }
+
+      scroller(dragInfo)
+    }
+
+    const horizontalContainer = document.querySelector('.a11y-table__container')
+    const horizontalScrollbarHandle = document.querySelector(
+      '.a11y-table__scrollbar--horizontal .a11y-table__scroll-handle'
+    )
+
+    most.runEffects(
+      most.tap(
+        handleDrag(distance => {
+          console.log(distance)
+          horizontalContainer.scrollLeft = distance
+        }),
+        most.map(dragInfo => {
+          const min = 0
+          const max =
+            dimensions.table.width - dimensions.scrollBar.horizontal.width
+
+          if (!dragInfo.offset) {
+            return horizontalContainer.scrollLeft
+          }
+
+          const offsetX =
+            dragInfo.offset.dx *
+            (dimensions.scrollBar.horizontal.width / dimensions.table.width)
+          const distance = dragInfo.x - offsetX
+
+          if (distance < min) {
+            return min
+          } else if (distance > max) {
+            return max
+          } else {
+            return distance
+          }
+        }, makeDraggable(document.body, horizontalScrollbarHandle))
+      ),
+      newDefaultScheduler()
+    )
+  }
+
+  onHorizontalDrag (dimensions) {
+    return event => {
+      console.log(event)
+    }
   }
 
   onHorizontalScroll (dimensions) {

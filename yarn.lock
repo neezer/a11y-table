@@ -55,6 +55,22 @@
     lodash "^4.2.0"
     to-fast-properties "^2.0.0"
 
+"@most/core@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@most/core/-/core-1.0.2.tgz#df38f2391bb817fea08af25a4b2fefd5f8a848f1"
+  dependencies:
+    "@most/disposable" "^1.0.0"
+    "@most/prelude" "^1.6.4"
+    "@most/scheduler" "^1.0.1"
+    "@most/types" "^1.0.0"
+
+"@most/disposable@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@most/disposable/-/disposable-1.0.0.tgz#3d88ab1617ed09e3c9a8503bc9ad01196319bc18"
+  dependencies:
+    "@most/prelude" "^1.6.4"
+    "@most/types" "^1.0.0"
+
 "@most/dom-event@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@most/dom-event/-/dom-event-2.0.0.tgz#ab8f47a9099b2b69eafa83702cc903b17073c15c"
@@ -62,13 +78,7 @@
     "@most/scheduler" "^0.13.0"
     "@most/types" "^0.11.1"
 
-"@most/multicast@^1.2.5":
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/@most/multicast/-/multicast-1.3.0.tgz#e01574840df634478ac3fabd164c6e830fb3b966"
-  dependencies:
-    "@most/prelude" "^1.4.0"
-
-"@most/prelude@^1.4.0", "@most/prelude@^1.6.4":
+"@most/prelude@^1.6.4":
   version "1.6.4"
   resolved "https://registry.yarnpkg.com/@most/prelude/-/prelude-1.6.4.tgz#254ab6e22c0d4e7cb19e6ec1c966b75f57317f25"
 
@@ -79,9 +89,20 @@
     "@most/prelude" "^1.6.4"
     "@most/types" "^0.11.1"
 
+"@most/scheduler@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@most/scheduler/-/scheduler-1.0.1.tgz#aaa6611c0989c83103148a8c2cd7e090fd9a68dc"
+  dependencies:
+    "@most/prelude" "^1.6.4"
+    "@most/types" "^1.0.0"
+
 "@most/types@^0.11.1":
   version "0.11.1"
   resolved "https://registry.yarnpkg.com/@most/types/-/types-0.11.1.tgz#5e305e0e346c5b01f1ebdeec4c1dfa5b189b5f9d"
+
+"@most/types@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@most/types/-/types-1.0.0.tgz#5c301d2437342a1b82e38463fdb94e1bafe2c6d9"
 
 "@sheerun/eslint-config-standard@^10.2.1":
   version "10.2.1"
@@ -2972,14 +2993,6 @@ mixin-deep@^1.2.0:
   dependencies:
     minimist "0.0.8"
 
-most@^1.7.2:
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/most/-/most-1.7.2.tgz#3f8b8bf0e4410ad8490b3599ea3777fca964a1c4"
-  dependencies:
-    "@most/multicast" "^1.2.5"
-    "@most/prelude" "^1.4.0"
-    symbol-observable "^1.0.2"
-
 ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
@@ -4520,10 +4533,6 @@ symbol-observable@1.0.1:
 symbol-observable@^0.2.2:
   version "0.2.4"
   resolved "https://registry.yarnpkg.com/symbol-observable/-/symbol-observable-0.2.4.tgz#95a83db26186d6af7e7a18dbd9760a2f86d08f40"
-
-symbol-observable@^1.0.2:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/symbol-observable/-/symbol-observable-1.1.0.tgz#5c68fd8d54115d9dfb72a84720549222e8db9b32"
 
 table@^3.7.8:
   version "3.8.3"

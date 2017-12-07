@@ -255,7 +255,7 @@ class A11yTable {
   handleScrolling (dimensions) {
     const draggingClass = 'a11y-table__scroll-handle--dragging'
 
-    const handleDrag = scroller => dragInfo => {
+    const handleDrag = scroller => ({ dragInfo, distance }) => {
       const el = dragInfo.target
 
       if (dragInfo.action === GRAB) {
@@ -268,7 +268,7 @@ class A11yTable {
         return
       }
 
-      scroller(dragInfo)
+      scroller(distance)
     }
 
     const horizontalContainer = document.querySelector('.a11y-table__container')
@@ -287,17 +287,17 @@ class A11yTable {
             dimensions.table.width - dimensions.scrollBar.horizontal.width
 
           if (!dragInfo.offset) {
-            return horizontalContainer.scrollLeft
+            return { dragInfo, distance: horizontalContainer.scrollLeft }
           }
 
           const distance = dragInfo.x - dragInfo.offset.dx
 
           if (distance < min) {
-            return min
+            return { dragInfo, distance: min }
           } else if (distance > max) {
-            return max
+            return { dragInfo, distance: max }
           } else {
-            return distance
+            return { dragInfo, distance }
           }
         }, makeDraggable(document.body, horizontalScrollbarHandle, dimensions))
       ),

@@ -20,9 +20,10 @@ const eventToDragInfo = (action, target, e, dragOffset) => ({
   offset: dragOffset
 })
 
-const beginDrag = (area, draggable) => e => {
+const beginDrag = (area, draggable, dimensions) => e => {
+  const xRatio = dimensions.table.width / dimensions.scrollBar.horizontal.width
   const dragOffset = {
-    dx: e.clientX - draggable.offsetLeft,
+    dx: e.clientX - draggable.offsetLeft * xRatio,
     dy: e.clientY - draggable.offsetTop
   }
 
@@ -39,10 +40,10 @@ const beginDrag = (area, draggable) => e => {
 const endDrag = draggable => e =>
   most.at(0, eventToDragInfo(DROP, draggable, e))
 
-const makeDraggable = (area, draggable) => {
+const makeDraggable = (area, draggable, dimensions) => {
   const mousedowns = most.tap(preventDefault, mostDOM.mousedown(draggable))
   const mouseups = mostDOM.mouseup(area)
-  const drag = most.map(beginDrag(area, draggable), mousedowns)
+  const drag = most.map(beginDrag(area, draggable, dimensions), mousedowns)
   const drop = most.map(endDrag(draggable), mouseups)
 
   return most.switchLatest(most.merge(drag, drop))
@@ -278,7 +279,6 @@ class A11yTable {
     most.runEffects(
       most.tap(
         handleDrag(distance => {
-          console.log(distance)
           horizontalContainer.scrollLeft = distance
         }),
         most.map(dragInfo => {
@@ -290,10 +290,7 @@ class A11yTable {
             return horizontalContainer.scrollLeft
           }
 
-          const offsetX =
-            dragInfo.offset.dx *
-            (dimensions.scrollBar.horizontal.width / dimensions.table.width)
-          const distance = dragInfo.x - offsetX
+          const distance = dragInfo.x - dragInfo.offset.dx
 
           if (distance < min) {
             return min
@@ -302,7 +299,7 @@ class A11yTable {
           } else {
             return distance
           }
-        }, makeDraggable(document.body, horizontalScrollbarHandle))
+        }, makeDraggable(document.body, horizontalScrollbarHandle, dimensions))
       ),
       newDefaultScheduler()
     )

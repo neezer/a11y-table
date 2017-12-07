@@ -1,0 +1,20 @@
+{
+  "name": "a11y-table",
+  "version": "0.0.1",
+  "main": "index.js",
+  "author": "Evan Sherwood <evan@sherwood.io>",
+  "license": "MIT",
+  "devDependencies": {
+    "husky": "^0.14.3",
+    "lint-staged": "^6.0.0",
+    "parcel-bundler": "^1.0.1",
+    "prettier-standard": "^7.0.3",
+    "standard": "^10.0.3"
+  },
+  "dependencies": {
+    "@most/dom-event": "^2.0.0",
+    "hyperhtml": "^2.4.0",
+    "mewt": "^2.0.2",
+    "most": "^1.7.2"
+  }
+}

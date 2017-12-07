@@ -60,6 +60,7 @@ export default dimensions => {
       cursor: -webkit-grab;
     }
 
+    .a11y-table__scroll-handle--dragging,
     .a11y-table__scrollbar .a11y-table__scroll-handle--dragging {
       cursor: -webkit-grabbing;
     }

@@ -21,11 +21,13 @@ const handleScrolling = dimensions => {
 
     if (dragInfo.action === GRAB) {
       el.classList.add(draggingClass)
+      document.body.classList.add(draggingClass)
       return
     }
 
     if (dragInfo.action === DROP) {
       el.classList.remove(draggingClass)
+      document.body.classList.remove(draggingClass)
       return
     }
 

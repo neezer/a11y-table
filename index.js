@@ -156,38 +156,36 @@ class A11yTable {
       </div>
     `
 
-    if (!this._mutationObserver) {
-      this._mutationObserver = new window.MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-          const horizontalContainer = document.querySelector(
-            '.a11y-table__container'
-          )
-          const verticalContainer = document.querySelector('.a11y-table__table')
-          const horizontalScrollbarHandle = document.querySelector(
-            '.a11y-table__scrollbar--horizontal .a11y-table__scroll-handle'
-          )
-          const verticalScrollbarHandle = document.querySelector(
-            '.a11y-table__scrollbar--vertical .a11y-table__scroll-handle'
-          )
+    const mutationObserver = new window.MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        const horizontalContainer = document.querySelector(
+          '.a11y-table__container'
+        )
+        const verticalContainer = document.querySelector('.a11y-table__table')
+        const horizontalScrollbarHandle = document.querySelector(
+          '.a11y-table__scrollbar--horizontal .a11y-table__scroll-handle'
+        )
+        const verticalScrollbarHandle = document.querySelector(
+          '.a11y-table__scrollbar--vertical .a11y-table__scroll-handle'
+        )
 
-          if (
-            horizontalContainer &&
-            verticalContainer &&
-            horizontalScrollbarHandle &&
-            verticalScrollbarHandle
-          ) {
-            handleScrolling(dimensions)
-          }
-        })
-      })
+        if (
+          horizontalContainer &&
+          verticalContainer &&
+          horizontalScrollbarHandle &&
+          verticalScrollbarHandle
+        ) {
+          handleScrolling(dimensions)
 
-      this._mutationObserver.observe(document.body, {
-        childList: true,
-        subtree: true
+          mutationObserver.disconnect()
+        }
       })
-    } else {
-      this._mutationObserver.disconnect()
-    }
+    })
+
+    mutationObserver.observe(document.body, {
+      childList: true,
+      subtree: true
+    })
 
     bind(this._targetEl)`
     <div class='a11y-table'>

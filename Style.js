@@ -4,12 +4,9 @@ export default dimensions => {
   return wire(dimensions)`
   <style>${{ text: `
     .a11y-table {
-      overflow-x: hidden;
+      overflow: hidden;
       width: inherit;
       height: inherit;
-    }
-
-    .a11y-table {
       display: flex;
       flex-wrap: wrap;
     }
@@ -18,10 +15,8 @@ export default dimensions => {
       overflow-x: scroll;
       height: ${dimensions.height - dimensions.scroller.size}px;
       width: ${dimensions.scrollBar.horizontal.width}px;
-    }
-
-    .a11y-table__container::-webkit-scrollbar {
-      display: none;
+      padding-bottom: 40px;
+      margin-bottom: -40px;
     }
 
     .a11y-table__column-header {
@@ -31,14 +26,16 @@ export default dimensions => {
     .a11y-table__table {
       overflow-y: scroll;
       overflow-x: hidden;
-      flex: 0 0 auto;
       width: ${dimensions.table.width}px;
       height: ${dimensions.height - dimensions.scroller.size}px;
       margin-top: -${dimensions.table.header.height}px;
+      padding-left: 40px;
+      margin-left: -40px;
+      direction: rtl;
     }
 
-    .a11y-table__table::-webkit-scrollbar {
-      display: none;
+    .a11y-table__table > * {
+      direction: ltr;
     }
 
     .a11y-table__column-header,
@@ -50,19 +47,19 @@ export default dimensions => {
     }
 
     .a11y-table__scrollbar {
-      background-color: tomato;
+      background-color: #ddd;
       position: relative;
     }
 
     .a11y-table__scrollbar .a11y-table__scroll-handle {
-      background-color: blue;
+      background-color: #9be;
       position: relative;
-      cursor: -webkit-grab;
+      cursor: grab;
     }
 
     .a11y-table__scroll-handle--dragging,
     .a11y-table__scrollbar .a11y-table__scroll-handle--dragging {
-      cursor: -webkit-grabbing;
+      cursor: grabbing;
     }
 
     .a11y-table__scrollbar.a11y-table__scrollbar--horizontal {

@@ -1,5 +1,6 @@
 import { bind, wire } from 'hyperhtml/cjs'
 import * as most from '@most/core'
+import * as mostDOM from '@most/dom-event'
 import { newDefaultScheduler } from '@most/scheduler'
 import Table from './Table'
 import FakeHeaders from './FakeHeaders'
@@ -114,66 +115,83 @@ class A11yTable {
 
     this.render()
 
-    window.onresize = () => {
-      this.render()
-    }
+    most.runEffects(
+      most.tap(
+        this.render.bind(this),
+        most.throttle(160, mostDOM.resize(window))
+      ),
+      newDefaultScheduler()
+    )
   }
 
   render () {
-    const render = () =>
-      new Promise((resolve, reject) => {
-        const dimensions = getDimensions({
-          target: this._targetEl,
-          columns: this._columns,
-          data: this._data
+    const dimensions = getDimensions({
+      target: this._targetEl,
+      columns: this._columns,
+      data: this._data
+    })
+
+    console.log(dimensions)
+
+    const table = Table(
+      { columns: this._columns, data: this._data },
+      dimensions
+    )
+
+    const fakeHeaders = FakeHeaders(this._columns, dimensions)
+
+    const fragment = wire(dimensions)`
+      ${Style(dimensions)}
+      <div class='a11y-table__container' onscroll=${this.onHorizontalScroll.bind(this)(dimensions)}>
+        ${fakeHeaders}
+        <div class='a11y-table__table' onscroll=${this.onVerticalScroll.bind(this)(dimensions)}>
+          ${table}
+        </div>
+      </div>
+      <div class='a11y-table__scrollbar a11y-table__scrollbar--vertical'>
+        <div class='a11y-table__scroll-handle'></div>
+      </div>
+      <div class='a11y-table__scrollbar a11y-table__scrollbar--horizontal'>
+        <div class='a11y-table__scroll-handle'></div>
+      </div>
+    `
+
+    if (!this._mutationObserver) {
+      this._mutationObserver = new window.MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+          const horizontalContainer = document.querySelector(
+            '.a11y-table__container'
+          )
+          const verticalContainer = document.querySelector('.a11y-table__table')
+          const horizontalScrollbarHandle = document.querySelector(
+            '.a11y-table__scrollbar--horizontal .a11y-table__scroll-handle'
+          )
+          const verticalScrollbarHandle = document.querySelector(
+            '.a11y-table__scrollbar--vertical .a11y-table__scroll-handle'
+          )
+
+          if (
+            horizontalContainer &&
+            verticalContainer &&
+            horizontalScrollbarHandle &&
+            verticalScrollbarHandle
+          ) {
+            handleScrolling(dimensions)
+          }
         })
-
-        const table = Table(
-          { columns: this._columns, data: this._data },
-          dimensions
-        )
-
-        const fakeHeaders = FakeHeaders(this._columns, dimensions)
-
-        const fragment = wire()`
-          ${Style(dimensions)}
-          <div class='a11y-table__container' onscroll=${this.onHorizontalScroll.bind(this)(dimensions)}>
-            ${fakeHeaders}
-            <div class='a11y-table__table' onscroll=${this.onVerticalScroll.bind(this)(dimensions)}>
-              ${table}
-            </div>
-          </div>
-          <div class='a11y-table__scrollbar a11y-table__scrollbar--vertical'>
-            <div class='a11y-table__scroll-handle'></div>
-          </div>
-          <div class='a11y-table__scrollbar a11y-table__scrollbar--horizontal'>
-            <div class='a11y-table__scroll-handle'></div>
-          </div>
-        `
-
-        if (!this._mutationObserver) {
-          this._mutationObserver = new window.MutationObserver(mutations => {
-            mutations
-              .filter(m => m.target === this._targetEl)
-              .forEach(mutation => {
-                handleScrolling(dimensions)
-              })
-          })
-
-          this._mutationObserver.observe(document.body, {
-            childList: true,
-            subtree: true
-          })
-        } else {
-          this._mutationObserver.disconnect()
-        }
-
-        resolve(fragment)
       })
+
+      this._mutationObserver.observe(document.body, {
+        childList: true,
+        subtree: true
+      })
+    } else {
+      this._mutationObserver.disconnect()
+    }
 
     bind(this._targetEl)`
     <div class='a11y-table'>
-      ${{ any: render(), placeholder: 'Loading...' }}
+      ${fragment}
     </div>
     `
   }

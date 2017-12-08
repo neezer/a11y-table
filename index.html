@@ -19,17 +19,20 @@
 
         #header {
             height: 150px;
-            flex: 0 auto;
-            background: red;
+            flex: 0 0 auto;
+            background: rgb(17, 73, 228);
+            padding: 10px;
+            color: whitesmoke;
         }
 
         #content {
             flex: 1 auto;
             display: flex;
+            min-height: 0;
         }
 
         #sidebar {
-            flex: 0 0 250px;
+            flex: 0 0 400px;
         }
 
         #results {
@@ -47,7 +50,9 @@
 </head>
 
 <body>
-    <div id="header"></div>
+    <div id="header">
+        <h1>I'm a header! Yipee!</h1>
+    </div>
     <div id="content">
         <div id="sidebar"></div>
         <div id="results"></div>

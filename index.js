@@ -118,7 +118,7 @@ class A11yTable {
     most.runEffects(
       most.tap(
         this.render.bind(this),
-        most.throttle(160, mostDOM.resize(window))
+        most.debounce(160, mostDOM.resize(window))
       ),
       newDefaultScheduler()
     )

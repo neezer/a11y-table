@@ -1,19 +1,26 @@
 import { wire } from 'hyperhtml/cjs'
 
 export default dimensions => {
+  const horizontalScrollMaxed =
+    dimensions.scrollBar.horizontal.width ===
+    dimensions.scroller.horizontal.width
+
+  const verticalScrollMaxed =
+    dimensions.scrollBar.vertical.height === dimensions.scroller.vertical.height
+
   return wire(dimensions)`
   <style>${{ text: `
     .a11y-table {
       overflow: hidden;
-      width: inherit;
-      height: inherit;
+      width: ${dimensions.width}px;
+      height: ${dimensions.height}px;
       display: flex;
       flex-wrap: wrap;
     }
 
     .a11y-table__container {
       overflow-x: scroll;
-      height: ${dimensions.height - dimensions.scroller.size}px;
+      height: ${dimensions.height - (horizontalScrollMaxed ? 0 : dimensions.scroller.size)}px;
       width: ${dimensions.scrollBar.horizontal.width}px;
       padding-bottom: 40px;
       margin-bottom: -40px;
@@ -32,7 +39,7 @@ export default dimensions => {
       overflow-y: scroll;
       overflow-x: hidden;
       width: ${dimensions.table.width}px;
-      height: ${dimensions.height - dimensions.scroller.size}px;
+      height: ${dimensions.height - (horizontalScrollMaxed ? 0 : dimensions.scroller.size)}px;
       margin-top: -${dimensions.table.header.height}px;
       padding-right: 40px;
     }
@@ -80,6 +87,7 @@ export default dimensions => {
     .a11y-table__scrollbar.a11y-table__scrollbar--horizontal {
       height: ${dimensions.scrollBar.horizontal.height}px;
       width: ${dimensions.scrollBar.horizontal.width}px;
+      ${horizontalScrollMaxed ? 'display: none;' : null}
     }
 
     .a11y-table__scrollbar.a11y-table__scrollbar--horizontal .a11y-table__scroll-handle {
@@ -90,6 +98,7 @@ export default dimensions => {
     .a11y-table__scrollbar.a11y-table__scrollbar--vertical {
       height: ${dimensions.scrollBar.vertical.height}px;
       width: ${dimensions.scrollBar.vertical.width}px;
+      ${verticalScrollMaxed ? 'display: none;' : null}
     }
 
     .a11y-table__scrollbar.a11y-table__scrollbar--vertical .a11y-table__scroll-handle {

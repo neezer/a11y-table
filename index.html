@@ -9,11 +9,31 @@
         body {
             width: 100vw;
             height: 100vh;
+            margin: 0;
         }
 
-        #container {
-            width: 1000px;
-            height: 450px;
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            height: 150px;
+            flex: 0 auto;
+            background: red;
+        }
+
+        #content {
+            flex: 1 auto;
+            display: flex;
+        }
+
+        #sidebar {
+            flex: 0 0 250px;
+        }
+
+        #results {
+            flex: 1 auto;
         }
 
         .a11y-table {}
@@ -27,7 +47,11 @@
 </head>
 
 <body>
-    <div id="container"></div>
+    <div id="header"></div>
+    <div id="content">
+        <div id="sidebar"></div>
+        <div id="results"></div>
+    </div>
     <script src="./index.js"></script>
 </body>
 

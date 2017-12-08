@@ -113,6 +113,10 @@ class A11yTable {
       : this._shouldRender
 
     this.render()
+
+    window.onresize = () => {
+      this.render()
+    }
   }
 
   render () {
@@ -284,7 +288,7 @@ columns.set('inCart', { label: 'in cart', size: 50 })
 columns.set('viewed', { label: 'viewed', size: 50 })
 
 window.myTable = new A11yTable({
-  targetEl: document.getElementById('container'),
+  targetEl: document.getElementById('results'),
   columns,
   data
 })

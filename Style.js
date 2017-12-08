@@ -23,19 +23,34 @@ export default dimensions => {
       height: ${dimensions.table.header.height}px;
     }
 
+    .a11y-table__table-wrapper {
+      width: ${dimensions.table.width}px;
+      overflow: hidden;
+    }
+
     .a11y-table__table {
       overflow-y: scroll;
       overflow-x: hidden;
       width: ${dimensions.table.width}px;
       height: ${dimensions.height - dimensions.scroller.size}px;
       margin-top: -${dimensions.table.header.height}px;
-      padding-left: 40px;
-      margin-left: -40px;
-      direction: rtl;
+      padding-right: 40px;
     }
 
-    .a11y-table__table > * {
-      direction: ltr;
+    .a11y-table__column-headers.a11y-table__column-headers--fake {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      width: ${dimensions.table.width}px;
+      white-space: nowrap;
+      display: flex;
+      background-color: white;
+      z-index: 10;
+      position: relative;
+    }
+
+    .a11y-table__column-header.a11y-table__column-header--fake {
+      display: inline-block;
     }
 
     .a11y-table__column-header,

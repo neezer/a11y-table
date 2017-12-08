@@ -1,4 +1,5 @@
 import { wire } from 'hyperhtml/cjs'
+import ColGroup from './ColGroup'
 import Header from './Header'
 import Body from './Body'
 
@@ -11,6 +12,7 @@ export default (details, dimensions) => {
 
   return wire(details)`
   <table style=${style}>
+    ${ColGroup(details.columns)}
     ${Header(details.columns)}
     ${Body(details)}
   </table>

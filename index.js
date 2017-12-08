@@ -131,8 +131,6 @@ class A11yTable {
       data: this._data
     })
 
-    console.log(dimensions)
-
     const table = Table(
       { columns: this._columns, data: this._data },
       dimensions
@@ -144,8 +142,10 @@ class A11yTable {
       ${Style(dimensions)}
       <div class='a11y-table__container' onscroll=${this.onHorizontalScroll.bind(this)(dimensions)}>
         ${fakeHeaders}
-        <div class='a11y-table__table' onscroll=${this.onVerticalScroll.bind(this)(dimensions)}>
-          ${table}
+        <div class='a11y-table__table-wrapper'>
+          <div class='a11y-table__table' onscroll=${this.onVerticalScroll.bind(this)(dimensions)}>
+            ${table}
+          </div>
         </div>
       </div>
       <div class='a11y-table__scrollbar a11y-table__scrollbar--vertical'>

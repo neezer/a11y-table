@@ -1,10 +1,8 @@
 import { wire } from 'hyperhtml/cjs'
 
 function Column (info) {
-  const style = { width: `${info.size}px` }
-
   return wire(info)`
-  <th class='a11y-table__column-header' style=${style}>
+  <th class='a11y-table__column-header'>
     ${info.label}
   </th>
   `
